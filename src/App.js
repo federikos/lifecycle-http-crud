@@ -1,26 +1,61 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, {Component} from 'react';
+import shortid from 'shortid';
 import './App.css';
+import Header from './Header';
+import Notes from './Notes';
+import Form from './Form';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      notes: [],
+    }
+  }
+
+  loadNotes = () => {
+    fetch(`${process.env.REACT_APP_NOTES_URL}/notes`)
+      .then(res => res.json())
+      .then(notes => {
+        this.setState({
+          notes: notes
+        })
+      })
+  }
+
+  sendNote = (e, currentNote) => {
+    e.preventDefault();
+    fetch(`${process.env.REACT_APP_NOTES_URL}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({
+        content: currentNote,
+        id: shortid.generate(),
+      }),
+    })
+      .then(res => this.loadNotes())
+  }
+
+  deleteNote = id => {
+    fetch(`${process.env.REACT_APP_NOTES_URL}/notes/${id}`, {
+      method: 'DELETE',
+    })
+      .then(res => this.loadNotes())
+  }
+
+  componentDidMount() {
+    this.loadNotes();
+  }
+
+  render () {
+    return (
+      <div className="App">
+        <Header loadNotes={this.loadNotes} />
+        <Notes notes={this.state.notes} deleteNote={this.deleteNote} />
+        <Form sendNote={this.sendNote} />
+      </div>
+    );
+  };
 }
 
 export default App;
